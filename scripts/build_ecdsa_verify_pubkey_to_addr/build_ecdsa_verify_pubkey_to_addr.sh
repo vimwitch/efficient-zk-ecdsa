@@ -1,5 +1,5 @@
 CIRCUITS_DIR=../../circuits
-PHASE1=$CIRCUITS_DIR/pot20_final.ptau
+PHASE1=$CIRCUITS_DIR/powersOfTau28_hez_final_20.ptau
 BUILD_DIR=../../build/ecdsa_verify_pubkey_to_addr
 CIRCUIT_NAME=build_ecdsa_verify_pubkey_to_addr
 

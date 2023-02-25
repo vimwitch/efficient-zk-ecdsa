@@ -68,9 +68,11 @@ const prove = async () => {
   const rInv = new BN(r).invm(SECP256K1_N);
 
   // w = -(r^-1 * msg)
-  const w = rInv.mul(new BN(msgHash)).neg().umod(SECP256K1_N);
+  const _r = rInv.neg().umod(SECP256K1_N)
+  // compute w and U in circuit
+  // const w = rInv.mul(new BN(msgHash)).neg().umod(SECP256K1_N);
   // U = -(w * G) = -(r^-1 * msg * G)
-  const U = ec.curve.g.mul(w);
+  // const U = ec.curve.g.mul(w);
 
   // T = r^-1 * R
   const T = rPoint.getPublic().mul(rInv);
@@ -82,7 +84,9 @@ const prove = async () => {
 
   const input = {
     TPreComputes,
-    U: [splitToRegisters(U.x), splitToRegisters(U.y)],
+    _r: [splitToRegisters(_r.toString('hex'))],
+    m: [splitToRegisters(new BN(msgHash).toString('hex'))],
+    // U: [splitToRegisters(U.x), splitToRegisters(U.y)],
     s: [splitToRegisters(s.toString("hex"))]
   };
 

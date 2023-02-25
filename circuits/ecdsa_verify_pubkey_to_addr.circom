@@ -1,12 +1,30 @@
 pragma circom 2.0.6;
 include "./ecdsa_verify.circom";
 include "./circom-ecdsa-circuits/zk-identity/eth.circom";
+include "./circom-ecdsa-circuits/ecdsa.circom";
 
 template ECDSAVerifyPubKeyToAddr(n, k) {
     signal input s[k];
     signal input TPreComputes[32][256][2][4]; // T = r^-1 * R
-    signal input U[2][k]; // -(m * r^-1 * G)
+    signal input m[k];
+    signal input _r[k]; // -r^-1
     signal output addr;
+
+    var prime[100] = get_secp256k1_order(n, k);
+    component rMultM = BigMultModP(n, k);
+    for (var idx = 0; idx < k; idx++) {
+        rMultM.a[idx] <== m[idx];
+        rMultM.b[idx] <== _r[idx];
+        rMultM.p[idx] <== prime[idx];
+    }
+
+    // Internally this does privkey*G
+    component UMul = ECDSAPrivToPub(n, k);
+    for (var idx = 0; idx < k; idx++) {
+        UMul.privkey[idx] <== rMultM.out[idx];
+    }
+
+    // signal U[2][k]; // -(m * r^-1 * G)
 
     component ecdsaVerify = ECDSAVerify(n, k);
 
@@ -26,9 +44,9 @@ template ECDSAVerifyPubKeyToAddr(n, k) {
         ecdsaVerify.s[i] <== s[i];
     }
 
-    for (var i = 0; i < k; i++) { 
-        ecdsaVerify.U[0][i] <== U[0][i];
-        ecdsaVerify.U[1][i] <== U[1][i];
+    for (var i = 0; i < k; i++) {
+        ecdsaVerify.U[0][i] <== UMul.pubkey[0][i];
+        ecdsaVerify.U[1][i] <== UMul.pubkey[1][i];
     }
 
     component flattenPub = FlattenPubkey(n, k);
